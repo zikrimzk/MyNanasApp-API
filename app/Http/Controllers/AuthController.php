@@ -10,6 +10,16 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    // Helper function to keep responses consistent
+    private function sendResponse($data, $message, $status = true, $code = 200)
+    {
+        return response()->json([
+            'status' => $status,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
     public function register(Request $request)
     {
         $request->validate([
@@ -33,25 +43,15 @@ class AuthController extends Controller
                 'ent_email' => $request->ent_email,
                 'ent_username' => $request->ent_username,
                 'ent_password' => Hash::make($request->ent_password),
-                'ent_business_name' => $request->ent_business_name, 
+                'ent_business_name' => $request->ent_business_name,
                 'ent_business_ssmNo' => $request->ent_business_ssmNo,
             ]);
-
-            // $token = $user->createToken('mobile_token')->plainTextToken;
-
-            return response()->json([
-                'message' => 'Registration successful',
-                // 'token' => $token,
-                'user' => $user
-            ], 201);
+            
+            return $this->sendResponse($user, 'Registration successful', true, 201);
 
         } catch (Exception $e) {
             Log::error("Registration failed: " . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Registration failed due to a server error. Please try again later.',
-                'error_code' => 'DB_INSERT_FAILED' 
-            ], 500);
+            return $this->sendResponse(null, 'Registration failed', false, 500);
         }
     }
 
@@ -66,26 +66,22 @@ class AuthController extends Controller
             $user = User::where('ent_username', $request->ent_username)->first();
 
             if (!$user || !Hash::check($request->ent_password, $user->ent_password)) {
-                return response()->json([
-                    'message' => 'Invalid username or password'
-                ], 401);
+                return $this->sendResponse(null, 'Invalid username or password', false, 401);
             }
 
             $token = $user->createToken('mobile_token')->plainTextToken;
 
-            return response()->json([
-                'message' => 'Login successful',
+            // Combine Token and User into one object for the 'data' field
+            $responseData = [
                 'token' => $token,
                 'user' => $user
-            ], 200);
+            ];
+
+            return $this->sendResponse($responseData, 'Login successful');
 
         } catch (Exception $e) {
             Log::error("Login Error: " . $e->getMessage());
-
-            return response()->json([
-                'message' => 'An error occurred while logging in. Please try again.',
-                'error' => $e->getMessage()
-            ], 500);
+            return $this->sendResponse(null, 'Login error', false, 500);
         }
     }
 
@@ -95,17 +91,10 @@ class AuthController extends Controller
             if ($request->user()) {
                 $request->user()->tokens()->delete();
             }
-
-            return response()->json([
-                'message' => 'Logged out successfully'
-            ], 200);
+            return $this->sendResponse(null, 'Logged out successfully');
 
         } catch (Exception $e) {
-            Log::error("Logout Error: " . $e->getMessage());
-
-            return response()->json([
-                'message' => 'Failed to logout. Please try again.',
-            ], 500);
+            return $this->sendResponse(null, 'Failed to logout', false, 500);
         }
     }
 }
