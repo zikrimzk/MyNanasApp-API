@@ -22,8 +22,8 @@ class PremiseController extends Controller
     {
         // Implementation for retrieving posts
         $request->validate([
-            'premise_type' => 'required|in:All,Announcement,Community',
-            'specific_user' => 'nullable|boolean',
+            'premise_type' => 'required|in:All,Farm,Shop',
+            'specific_user' => 'nullable|boolean', // true for specific user, false for all
         ]);
 
         try {
@@ -45,7 +45,7 @@ class PremiseController extends Controller
             // Get the results
             $premises = $query->get();
 
-            return $this->sendResponse([], 'Premises retrieved successfully');
+            return $this->sendResponse($premises, 'Premises retrieved successfully');
 
         } catch (Exception $e) {
             return $this->sendResponse(null, 'Failed to retrieve premises', false, 500);
