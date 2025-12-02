@@ -36,6 +36,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/get_posts', [PostController::class, 'getPosts']);
     Route::post('/add_post', [PostController::class, 'addPost']);
     Route::post('/update_post', [PostController::class, 'updatePost']);
+    Route::post('/like_post', [PostController::class, 'likePost']);
+    Route::post('/view_post', [PostController::class, 'viewPost']);
 });
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

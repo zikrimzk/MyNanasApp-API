@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\UserPost;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
@@ -27,20 +28,47 @@ class PostController extends Controller
         ]);
         
         try {
+            $user = auth()->user(); // Get current logged in user
+
+            // Start the query
+            $query = Post::where('post_status', 1)
+                ->with('user'); // Load the author of the post
+
+            // == KEY CHANGE: Eager Load the user's interaction ==
+            // We load the 'userPosts' relationship, but ONLY where entID matches the current user
+            // userPosts is the same as "likes"
+            $query->with(['userPosts' => function ($q) use ($user) {
+                $q->where('entID', $user->entID);
+            }]);
+
+            // Apply Filters
             if ($request->specific_user) {
-                $posts = Post::where('entID', auth()->user()->entID)
-                    ->where('post_status', 1)
-                    ->with('user')
-                    ->get();
-                return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
+                $query->where('entID', $user->entID);
             } else {
-                $posts = Post::where('post_status', 1)
-                ->when($request->post_type !== 'All', function ($query) use ($request) {
-                    return $query->where('post_type', $request->post_type);
-                })
-                ->with('user')
-                ->get();
+                if ($request->post_type !== 'All') {
+                    $query->where('post_type', $request->post_type);
+                }
             }
+
+            // Get the results
+            $posts = $query->get();
+
+            // == TRANSFORM THE DATA ==
+            // The API currently returns a nested array for 'userPosts'. 
+            // We need to flatten this into a simple "is_liked": true/false field.
+            $posts->transform(function ($post) {
+                
+                // Check if the 'userPosts' collection has any items (meaning the user interacted)
+                // AND check if the specific 'is_liked' column in that row is true (1)
+                $interaction = $post->userPosts->first();
+                
+                $post->is_liked = ($interaction && $interaction->is_liked) ? true : false;
+                
+                // Remove the 'userPosts' array from the output to keep JSON clean
+                unset($post->userPosts); 
+                
+                return $post;
+            });
             
             return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
         } catch (Exception $e) {
@@ -133,6 +161,71 @@ class PostController extends Controller
             }
         } catch (Exception $e) {
             return $this->sendResponse(null, 'Failed to update/delete post', false, 500);
+        }
+    }
+
+    public function likePost(Request $request)
+    {
+        $request->validate([
+            'postID' => 'required|exists:posts,postID',
+            'is_liked' => 'required|boolean',
+        ]);
+
+        try {
+            $user = auth()->user();
+            $post = Post::find($request->postID);
+
+            $userPost = UserPost::firstOrNew([
+                'entID' => $user->entID,
+                'postID' => $post->postID,
+            ]);
+
+            if ($request->is_liked) {
+                // Like the post
+                if (!$userPost->exists || !$userPost->is_liked) {
+                    $userPost->is_liked = true;
+                    $userPost->userpost_status = 1;
+                    $userPost->save();
+
+                    // Increment likes count
+                    $post->post_likes_count += 1;
+                    $post->save();
+                }
+                return $this->sendResponse(null, 'Post liked successfully', true, 200);
+            } else {
+                // Unlike the post
+                if ($userPost->exists && $userPost->is_liked) {
+                    $userPost->is_liked = false;
+                    $userPost->userpost_status = 1;
+                    $userPost->save();
+
+                    // Decrement likes count
+                    $post->post_likes_count = max(0, $post->post_likes_count - 1);
+                    $post->save();
+                }
+                return $this->sendResponse(null, 'Post unliked successfully', true, 200);
+            }
+        } catch (Exception $e) {
+            return $this->sendResponse(null, 'Failed to like/unlike post', false, 500);
+        }
+    }
+
+    public function viewPost(Request $request)
+    {
+        $request->validate([
+            'postID' => 'required|exists:posts,postID',
+        ]);
+
+        try {
+            $post = Post::find($request->postID);
+            
+            // Increment the view count
+            $post->post_views_count += 1;
+            $post->save();
+
+            return $this->sendResponse(null, 'View count incremented', true, 200);
+        } catch (Exception $e) {
+            return $this->sendResponse(null, 'Failed to increment view', false, 500);
         }
     }
 }
