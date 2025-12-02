@@ -6,6 +6,7 @@ use App\Models\Post;
 use App\Models\UserPost;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Exception;
 
 class PostController extends Controller
 {

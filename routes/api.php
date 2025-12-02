@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\PremiseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -38,6 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/update_post', [PostController::class, 'updatePost']);
     Route::post('/like_post', [PostController::class, 'likePost']);
     Route::post('/view_post', [PostController::class, 'viewPost']);
+
+    // Premise routes
+    Route::post('/get_premises', [PremiseController::class, 'getPremises']);
+    Route::post('/add_premise', [PremiseController::class, 'addPremise']);
+    Route::post('/update_premise', [PremiseController::class, 'updatePremise']);
 });
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
