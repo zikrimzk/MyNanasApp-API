@@ -33,8 +33,9 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // Post routes
-    Route::post('/add_post', [PostController::class, 'addPost']);
     Route::post('/get_posts', [PostController::class, 'getPosts']);
+    Route::post('/add_post', [PostController::class, 'addPost']);
+    Route::post('/update_post', [PostController::class, 'updatePost']);
 });
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

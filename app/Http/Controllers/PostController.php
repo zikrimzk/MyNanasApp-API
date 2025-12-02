@@ -23,15 +23,24 @@ class PostController extends Controller
         // Implementation for retrieving posts
         $request->validate([
             'post_type' => 'required|in:All,Announcement,Community',
+            'specific_user' => 'nullable|boolean',
         ]);
-
+        
         try {
-            $posts = Post::where('post_status', 1)
+            if ($request->specific_user) {
+                $posts = Post::where('entID', auth()->user()->entID)
+                    ->where('post_status', 1)
+                    ->with('user')
+                    ->get();
+                return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
+            } else {
+                $posts = Post::where('post_status', 1)
                 ->when($request->post_type !== 'All', function ($query) use ($request) {
                     return $query->where('post_type', $request->post_type);
                 })
                 ->with('user')
                 ->get();
+            }
             
             return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
         } catch (Exception $e) {
@@ -83,6 +92,47 @@ class PostController extends Controller
 
         } catch (Exception $e) {
             return $this->sendResponse(null, 'Failed to create post: ' . $e->getMessage(), false, 500);
+        }
+    }
+
+    public function updatePost(Request $request)
+    {
+        $request->validate([
+            'postID' => 'required|exists:posts,postID',
+            'post_caption' => 'nullable|string',
+            'post_location' => 'nullable|string',
+            'is_delete' => 'required|boolean', // true for delete, false for update
+        ]);
+
+        try {
+            $user = auth()->user();
+            
+            $post = Post::find($request->postID);
+
+            if($post->entID !== $user->entID) {
+                return $this->sendResponse(null, 'Unauthorized action on this post', false, 403);
+            }
+
+            if ($request->is_delete) {
+                $post->post_status = 0;
+                $post->updated_at = now();
+                $post->save();
+                return $this->sendResponse(null, 'Post deleted successfully', true, 200);
+            } else {
+                // if ($request->has('post_caption')) {
+                //     $post->post_caption = $request->post_caption;
+                // }
+                // if ($request->has('post_location')) {
+                //     $post->post_location = $request->post_location;
+                // }
+                $post->post_caption = $request->post_caption ?? $post->post_caption;
+                $post->post_location = $request->post_location;
+                $post->updated_at = now();
+                $post->save();
+                return $this->sendResponse($post, 'Post updated successfully', true, 200);
+            }
+        } catch (Exception $e) {
+            return $this->sendResponse(null, 'Failed to update/delete post', false, 500);
         }
     }
 }
