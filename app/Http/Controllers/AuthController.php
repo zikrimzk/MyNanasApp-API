@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use App\Models\Post;
 use App\Models\User;
+use App\Models\Premise;
+use App\Models\Product;
+use App\Models\UserPost;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
-use Exception;
 
 class AuthController extends Controller
 {
@@ -70,6 +74,28 @@ class AuthController extends Controller
                 return $this->sendResponse(null, 'Invalid username or password', false, 401);
             }
 
+            // 1. Total Active Posts
+            $user->total_posts = Post::where('entID', $user->entID)
+                ->where('post_status', 1) // Only count active posts
+                ->count();
+
+            // 2. Total Active Products (Assuming you have a Product model and status)
+            // Step A: Get all premiseIDs belonging to this user
+            $premiseIDs = Premise::where('entID', $user->entID)
+                ->where('premise_status', 1) // Optional: Ensure the premise itself is active
+                ->pluck('premiseID'); // Returns an array like [1, 5, 8]
+
+            // Step B: Count products where the premiseID is in that array
+            $user->total_products = Product::whereIn('premiseID', $premiseIDs)
+                ->where('product_status', 1)
+                ->count();
+
+            // 3. Total Likes (Total likes RECEIVED on their posts)
+            // This sums up the 'post_likes_count' column of all posts owned by this user
+            $user->total_likes = Post::where('entID', $user->entID)
+                ->where('post_status', 1)
+                ->sum('post_likes_count');
+
             $token = $user->createToken('mobile_token')->plainTextToken;
 
             // Combine Token and User into one object for the 'data' field
@@ -82,6 +108,7 @@ class AuthController extends Controller
 
         } catch (Exception $e) {
             Log::error("Login Error: " . $e->getMessage());
+            Log::error($e->getTraceAsString()); // See which line failed
             return $this->sendResponse(null, 'Login error', false, 500);
         }
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\PremiseController;
+use App\Http\Controllers\ProductController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,7 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/change_password', [AuthController::class, 'changePassword']);
     
     // User routes
-    Route::post('/get_user_profile', [UserController::class, 'getUserProfile']);
+    Route::post('/get_users', [UserController::class, 'getUsers']);
     Route::post('/update_user_profile', [UserController::class, 'updateUserProfile']);
 
     // Post routes
@@ -48,6 +49,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/get_premises', [PremiseController::class, 'getPremises']);
     Route::post('/add_premise', [PremiseController::class, 'addPremise']);
     Route::post('/update_premise', [PremiseController::class, 'updatePremise']);
+
+    // Product routes
+    Route::post('/get_product_categories', [ProductController::class, 'getProductCategories']);
+    Route::post('/get_products', [ProductController::class, 'getProducts']);
+    Route::post('/add_product', [ProductController::class, 'addProduct']);
 });
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
