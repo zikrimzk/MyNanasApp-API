@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\PremiseController;
 
 /*
@@ -23,15 +24,18 @@ Route::get('/', function (Request $request) {
     ], 200);
 });
 
+// Auth routes - no authentication required
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/change_password', [AuthController::class, 'changePassword']);
     
-    Route::get('/user', function (Request $request) {
-        return $request->user();
-    });
+    // User routes
+    Route::post('/get_user_profile', [UserController::class, 'getUserProfile']);
+    Route::post('/update_user_profile', [UserController::class, 'updateUserProfile']);
 
     // Post routes
     Route::post('/get_posts', [PostController::class, 'getPosts']);

@@ -98,4 +98,38 @@ class AuthController extends Controller
             return $this->sendResponse(null, 'Failed to logout', false, 500);
         }
     }
+
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required', // We need this for security
+            'new_password' => 'required|min:8',
+        ]);
+
+        try {
+            $user = auth()->user();
+
+            // 1. Security Check: Does the Current Password match DB?
+            if (!Hash::check($request->current_password, $user->ent_password)) {
+                return $this->sendResponse(null, 'Current password is incorrect', false, 401);
+            }
+
+            // 2. Logic Check: Is the New Password the same as the Old one?
+            if (Hash::check($request->new_password, $user->ent_password)) {
+                return $this->sendResponse(null, 'New password cannot be the same as the old password', false, 400);
+            }
+
+            // 3. Update Password 
+            $user->ent_password = Hash::make($request->new_password);
+            $user->save();
+
+            // 4. Revoke tokens (Optional: logs user out of all devices)
+            $user->tokens()->delete(); 
+
+            return $this->sendResponse(null, 'Password changed successfully', true, 200);
+
+        } catch (Exception $e) {
+            return $this->sendResponse(null, 'Failed to change password', false, 500);
+        }
+    }
 }

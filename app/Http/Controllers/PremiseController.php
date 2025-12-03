@@ -22,7 +22,7 @@ class PremiseController extends Controller
     {
         // Implementation for retrieving posts
         $request->validate([
-            'premise_type' => 'required|in:All,Farm,Shop',
+            'premise_type' => 'required|in:All,Farm,Shop/Kiosk',
             'specific_user' => 'nullable|boolean', // true for specific user, false for all
         ]);
 
@@ -55,7 +55,7 @@ class PremiseController extends Controller
     public function addPremise(Request $request)
     {
         $request->validate([
-            'premise_type' => 'required|in:Farm,Shop',
+            'premise_type' => 'required|in:Farm,Shop/Kiosk',
             'premise_name' => 'required|string',
             'premise_address' => 'nullable|string',
             'premise_city' => 'nullable|string',
@@ -91,7 +91,7 @@ class PremiseController extends Controller
     {
         $request->validate([
             'premiseID' => 'required|exists:premises,premiseID',
-            'premise_type' => 'required|in:Farm,Shop',
+            'premise_type' => 'required|in:Farm,Shop/Kiosk',
             'premise_name' => 'required|string',
             'premise_address' => 'nullable|string',
             'premise_city' => 'nullable|string',
