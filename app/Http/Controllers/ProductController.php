@@ -34,7 +34,7 @@ class ProductController extends Controller
         $request->validate([
             'premise_state' => 'required|string', // All or specific state
             'premise_city' => 'required|string', // All or specific city
-            // 'categoryID' => 'required|exists:product_categories,categoryID', // All or specific category
+            'categoryID' => 'required|numeric', // All (0) or specific category
             'specific_user' => 'nullable|boolean', // true for specific user, false for all
             'productID' => 'nullable|exists:products,productID', // true for specific product
         ]);
@@ -43,23 +43,39 @@ class ProductController extends Controller
             $user = auth()->user(); // Get current logged in user
 
             // Start the query
-            $query = Product::with('premise', 'category');
+            $query = Product::with('premise.user', 'category');
 
             // Apply Filters
             if ($request->specific_user) {
+                // For the user's own profile, show all non-deleted products (Active=1, Pending=2)
+                $query->where('product_status', '!=', 0); 
+                
+                // Filter products only associated with this user's premises
                 $query->whereHas('premise', function ($q) use ($user) {
-                    $q->where('entID', $user->entID)
-                    ->where('product_status', '!=', 0);
+                    $q->where('entID', $user->entID);
                 });
             } else if ($request->productID) {
                 $query->where('productID', $request->productID);
             } else {
                 $query->where('product_status', 1);
+                
+                // Filter by Premise State (Uses whereHas because state is on Premise model)
                 if ($request->premise_state !== 'All') {
-                    $query->where('premise_state', $request->premise_state);
+                    $query->whereHas('premise', function ($q) use ($request) {
+                        $q->where('premise_state', $request->premise_state);
+                    });
+
+                    // Filter by Premise City
+                    if ($request->premise_city !== 'All') {
+                        $query->whereHas('premise', function ($q) use ($request) {
+                            $q->where('premise_city', $request->premise_city);
+                        });
+                    }
                 }
-                if ($request->premise_city !== 'All') {
-                    $query->where('premise_city', $request->premise_city);
+                
+                // Filter by Category ID ('All' is represented by 0)
+                if ($request->categoryID !== 0) {
+                    $query->where('categoryID', $request->categoryID);
                 }
             }
 
