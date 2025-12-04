@@ -24,10 +24,15 @@ class PremiseController extends Controller
         $request->validate([
             'premise_type' => 'required|in:All,Farm,Shop/Kiosk',
             'specific_user' => 'nullable|boolean', // true for specific user, false for all
+            'entID' => 'nullable|exists:users,entID',
         ]);
 
         try {
-            $user = auth()->user(); // Get current logged in user
+            if($request->entID) {
+                $user = User::where('entID', $request->entID)->first();
+            } else {
+                $user = auth()->user(); // Get current logged in user
+            }
 
             // Start the query
             $query = Premise::where('premise_status', 1)

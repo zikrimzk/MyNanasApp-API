@@ -26,10 +26,15 @@ class PostController extends Controller
         $request->validate([
             'post_type' => 'required|in:All,Announcement,Community',
             'specific_user' => 'nullable|boolean',
+            'entID' => 'nullable|exists:users,entID',
         ]);
         
         try {
-            $user = auth()->user(); // Get current logged in user
+            if($request->entID) {
+                $user = User::where('entID', $request->entID)->first();
+            } else {
+                $user = auth()->user(); // Get current logged in user
+            }
 
             // Start the query
             $query = Post::where('post_status', 1)

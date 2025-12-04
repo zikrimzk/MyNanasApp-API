@@ -37,10 +37,15 @@ class ProductController extends Controller
             'categoryID' => 'nullable|numeric', // All (0) or specific category
             'specific_user' => 'nullable|boolean', // true for specific user, false for all
             'productID' => 'nullable|exists:products,productID', // true for specific product
+            'entID' => 'nullable|exists:users,entID',
         ]);
 
         try {
-            $user = auth()->user(); // Get current logged in user
+            if($request->entID) {
+                $user = User::where('entID', $request->entID)->first();
+            } else {
+                $user = auth()->user(); // Get current logged in user
+            }
 
             // Start the query
             $query = Product::with('premise.user', 'category');
