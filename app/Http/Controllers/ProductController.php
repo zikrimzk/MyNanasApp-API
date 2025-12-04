@@ -51,7 +51,7 @@ class ProductController extends Controller
                     $q->where('entID', $user->entID);
                 });
             } else if ($request->productID) {
-                $query->where('productID', $request->productID);
+                $query->where('productID', $request->productID)->where('product_status', '!=', 0);
             } else {
                 $query->where('product_status', 1);
                 if ($request->premise_state !== 'All') {
