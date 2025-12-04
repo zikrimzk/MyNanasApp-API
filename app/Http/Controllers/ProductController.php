@@ -34,7 +34,7 @@ class ProductController extends Controller
         $request->validate([
             'premise_state' => 'required|string', // All or specific state
             'premise_city' => 'required|string', // All or specific city
-            'categoryID' => 'required|numeric', // All (0) or specific category
+            'categoryID' => 'nullable|numeric', // All (0) or specific category
             'specific_user' => 'nullable|boolean', // true for specific user, false for all
             'productID' => 'nullable|exists:products,productID', // true for specific product
         ]);
