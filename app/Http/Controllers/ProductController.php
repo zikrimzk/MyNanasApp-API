@@ -183,7 +183,7 @@ class ProductController extends Controller
 
             // 4. Update Database
             $product->product_name = $request->product_name ?? $product->product_name;
-            $product->product_description = $request->product_description ?? $product->product_description;
+            $product->product_desc = $request->product_desc ?? $product->product_desc;
             $product->product_image = json_encode(array_values($finalImageList)); // Re-index array
             $product->product_category = $request->categoryID ?? $product->product_category;
             $product->product_unit = $request->product_unit ?? $product->product_unit;
