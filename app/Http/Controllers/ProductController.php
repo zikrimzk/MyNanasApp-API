@@ -126,7 +126,7 @@ class ProductController extends Controller
         $request->validate([
             'productID' => 'required|exists:products,productID',
             'is_delete' => 'required|boolean', // true for delete, false for update
-            'product_category' => 'nullable|exists:product_categories,categoryID',
+            'categoryID' => 'nullable|exists:product_categories,categoryID',
             'product_name' => 'nullable|string',
             'product_qty' => 'nullable|numeric',
             'product_unit' => 'nullable|string',
@@ -185,7 +185,7 @@ class ProductController extends Controller
             $product->product_name = $request->product_name ?? $product->product_name;
             $product->product_desc = $request->product_desc ?? $product->product_desc;
             $product->product_image = json_encode(array_values($finalImageList)); // Re-index array
-            $product->product_category = $request->categoryID ?? $product->product_category;
+            $product->categoryID = $request->categoryID ?? $product->categoryID;
             $product->product_unit = $request->product_unit ?? $product->product_unit;
             $product->product_qty = $request->product_qty ?? $product->product_qty;
             $product->product_price = $request->product_price ?? $product->product_price;
