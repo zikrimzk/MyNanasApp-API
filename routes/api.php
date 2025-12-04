@@ -54,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/get_product_categories', [ProductController::class, 'getProductCategories']);
     Route::post('/get_products', [ProductController::class, 'getProducts']);
     Route::post('/add_product', [ProductController::class, 'addProduct']);
+    Route::post('/update_product', [ProductController::class, 'updateProduct']);
 });
 
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {

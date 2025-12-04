@@ -124,55 +124,78 @@ class ProductController extends Controller
     {
         // 1. Validate 'product_image' as an array of files (max 4, max 10MB each example)
         $request->validate([
-            'is_delete' => 'required|boolean', // true for delete, false for update
-            'product_image' => 'array|max:4',
-            'product_image.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240', // Each image max 10MB
-            'product_category' => 'sometimes|required|exists:product_categories,categoryID',
-            'product_name' => 'sometimes|required|string',
-            'product_qty' => 'sometimes|required|numeric',
-            'product_unit' => 'sometimes|required|string',
-            'product_price' => 'sometimes|required|numeric',
-            'product_description' => 'sometimes|nullable|string',
-            'premiseID' => 'sometimes|required|exists:premises,premiseID',
             'productID' => 'required|exists:products,productID',
+            'is_delete' => 'required|boolean', // true for delete, false for update
+            'product_category' => 'nullable|exists:product_categories,categoryID',
+            'product_name' => 'nullable|string',
+            'product_qty' => 'nullable|numeric',
+            'product_unit' => 'nullable|string',
+            'product_price' => 'nullable|numeric',
+            'product_description' => 'nullable|string',
+            'existing_images' => 'nullable|array', // List of paths (strings) user kept
+            'new_images' => 'nullable|array', // List of new files
+            'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240', // Each image max 10MB
+            'premiseID' => 'nullable|exists:premises,premiseID',
         ]);
 
         try {
+            $product = Product::find($request->productID);
+
+            // === DELETE LOGIC ===
             if ($request->is_delete) {
-                $product = Product::find($request->productID);
-                $product->product_status = 0;
                 $product->updated_at = now();
+                $product->product_status = 0; // Soft Delete
                 $product->save();
                 return $this->sendResponse(null, 'Product deleted successfully', true, 200);
             }
-            // 2. Handle Image Uploads
-            $imagePaths = [];
-            if ($request->hasFile('product_image')) {
-                foreach ($request->file('product_image') as $image) {
-                    // Store in 'public/products' directory
-                    $path = $image->store('products', 'public'); 
-                    // Add the path to our array
-                    $imagePaths[] = $path;
+
+            // === UPDATE LOGIC ===
+
+            // 1. Handle Images
+            $currentDbImages = json_decode($product->product_image) ?? [];
+            $keptImages = $request->existing_images ?? []; // What user wants to keep
+            $newFiles = $request->file('new_images') ?? [];
+
+            // VALIDATION: Min 1, Max 4
+            $totalCount = count($keptImages) + count($newFiles);
+            if ($totalCount < 1) {
+                return $this->sendResponse(null, 'Product must have at least 1 image.', false, 422);
+            }
+            if ($totalCount > 4) {
+                return $this->sendResponse(null, 'Product cannot have more than 4 images.', false, 422);
+            }
+
+            // 2. CLEANUP: Delete removed images from physical storage
+            // If a file is in DB but NOT in $keptImages, delete it.
+            $imagesToDelete = array_diff($currentDbImages, $keptImages);
+            foreach ($imagesToDelete as $fileToDelete) {
+                if (\Illuminate\Support\Facades\Storage::disk('public')->exists($fileToDelete)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->delete($fileToDelete);
                 }
             }
 
-            // 3. Convert Array of paths to JSON String
-            // Example result: ["posts/img1.jpg", "posts/img2.jpg"]
-            $jsonImages = !empty($imagePaths) ? json_encode($imagePaths) : null;
+            // 3. UPLOAD: Add new images
+            $finalImageList = $keptImages; // Start with kept ones
+            foreach ($newFiles as $image) {
+                $path = $image->store('products', 'public');
+                $finalImageList[] = $path;
+            }
 
-            $product = Product::find($request->productID);
-            $product->product_name = $request->product_name;
-            $product->product_description = $request->product_description;
-            $product->product_image = $jsonImages;
-            $product->product_category = $request->product_category;
-            $product->product_unit = $request->product_unit;
-            $product->product_qty = $request->product_qty;
-            $product->product_price = $request->product_price;
-            $product->premiseID = $request->premiseID;
-            $product->product_status = 2;
+            // 4. Update Database
+            $product->product_name = $request->product_name ?? $product->product_name;
+            $product->product_description = $request->product_description ?? $product->product_description;
+            $product->product_image = json_encode(array_values($finalImageList)); // Re-index array
+            $product->product_category = $request->categoryID ?? $product->product_category;
+            $product->product_unit = $request->product_unit ?? $product->product_unit;
+            $product->product_qty = $request->product_qty ?? $product->product_qty;
+            $product->product_price = $request->product_price ?? $product->product_price;
+            $product->premiseID = $request->premiseID ?? $product->premiseID;
+            $product->product_status = $request->product_status ?? $product->product_status; // e.g. set back to pending if changed
+            
+            $product->updated_at = now();
             $product->save();
 
-            return $this->sendResponse($product, 'Product updated successfully');
+            return $this->sendResponse($product, 'Product updated successfully', true, 200);
         } catch (Exception $e) {
             return $this->sendResponse(null, $e->getMessage(), false, 500);
         }
