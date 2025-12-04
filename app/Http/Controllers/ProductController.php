@@ -60,13 +60,13 @@ class ProductController extends Controller
                 $query->where('product_status', 1);
                 
                 // Filter by Premise State (Uses whereHas because state is on Premise model)
-                if ($request->premise_state !== 'All') {
+                if ($request->premise_state !== 'All States') {
                     $query->whereHas('premise', function ($q) use ($request) {
                         $q->where('premise_state', $request->premise_state);
                     });
 
                     // Filter by Premise City
-                    if ($request->premise_city !== 'All') {
+                    if ($request->premise_city !== 'All Cities') {
                         $query->whereHas('premise', function ($q) use ($request) {
                             $q->where('premise_city', $request->premise_city);
                         });
