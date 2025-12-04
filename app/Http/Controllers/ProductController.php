@@ -81,7 +81,7 @@ class ProductController extends Controller
             'product_qty' => 'required|numeric',
             'product_unit' => 'required|string',
             'product_price' => 'required|numeric',
-            'product_description' => 'nullable|string',
+            'product_desc' => 'nullable|string',
             'categoryID' => 'required|exists:product_categories,categoryID',
             'premiseID' => 'required|exists:premises,premiseID',
         ]);
@@ -104,14 +104,14 @@ class ProductController extends Controller
 
             $product = Product::create([
                 'product_name' => $request->product_name,
-                'product_description' => $request->product_description,
+                'product_desc' => $request->product_desc,
                 'product_image' => $jsonImages,
                 'product_unit' => $request->product_unit,
                 'product_qty' => $request->product_qty,
                 'product_price' => $request->product_price,
                 'categoryID' => $request->categoryID,
                 'premiseID' => $request->premiseID,
-                'product_status' => 2, // 2 = pending
+                'product_status' => 1,
             ]);
 
             return $this->sendResponse($product, 'Product added successfully');
@@ -131,7 +131,7 @@ class ProductController extends Controller
             'product_qty' => 'nullable|numeric',
             'product_unit' => 'nullable|string',
             'product_price' => 'nullable|numeric',
-            'product_description' => 'nullable|string',
+            'product_desc' => 'nullable|string',
             'existing_images' => 'nullable|array', // List of paths (strings) user kept
             'new_images' => 'nullable|array', // List of new files
             'new_images.*' => 'image|mimes:jpeg,png,jpg,gif|max:10240', // Each image max 10MB
