@@ -64,13 +64,13 @@ class ProductController extends Controller
                     $query->whereHas('premise', function ($q) use ($request) {
                         $q->where('premise_state', $request->premise_state);
                     });
+                }
 
-                    // Filter by Premise City
-                    if ($request->premise_city !== 'All Cities') {
-                        $query->whereHas('premise', function ($q) use ($request) {
-                            $q->where('premise_city', $request->premise_city);
-                        });
-                    }
+                // Filter by Premise City
+                if ($request->premise_city !== 'All Cities') {
+                    $query->whereHas('premise', function ($q) use ($request) {
+                        $q->where('premise_city', $request->premise_city);
+                    });
                 }
                 
                 // Filter by Category ID ('All' is represented by 0)
