@@ -2,10 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
+use App\Models\User;
 use App\Models\Premise;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Exception;
 
 class PremiseController extends Controller
 {
