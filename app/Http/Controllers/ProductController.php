@@ -48,10 +48,11 @@ class ProductController extends Controller
             // Apply Filters
             if ($request->specific_user) {
                 $query->whereHas('premise', function ($q) use ($user) {
-                    $q->where('entID', $user->entID);
+                    $q->where('entID', $user->entID)
+                    ->where('product_status', '!=', 0);
                 });
             } else if ($request->productID) {
-                $query->where('productID', $request->productID)->where('product_status', '!=', 0);
+                $query->where('productID', $request->productID);
             } else {
                 $query->where('product_status', 1);
                 if ($request->premise_state !== 'All') {
