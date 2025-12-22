@@ -30,6 +30,8 @@ Route::get("/alive", [AuthController::class, 'alive']);
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+
+
 Route::middleware('auth:sanctum')->group(function () {
     // Auth routes
     Route::post('/logout', [AuthController::class, 'logout']);
@@ -41,7 +43,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Post routes
     Route::post('/get_posts', [PostController::class, 'getPosts']);
+    Route::post('/get_new_posts', [PostController::class, 'getNewPosts']);
     Route::post('/add_post', [PostController::class, 'addPost']);
+    Route::get('/verify_post/{postId}', [PostController::class, 'verifyPost']);
+
     Route::post('/update_post', [PostController::class, 'updatePost']);
     Route::post('/like_post', [PostController::class, 'likePost']);
     Route::post('/view_post', [PostController::class, 'viewPost']);

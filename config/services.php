@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'mistral' => [
+        'key' => env('MISTRAL_API_KEY'),
+        'instruction' =>env('MISTRAL_INSTRUCTION'),
+
+    ],
+
 ];

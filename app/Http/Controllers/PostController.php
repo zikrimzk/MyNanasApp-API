@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Models\UserPost;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Http;
 
 class PostController extends Controller
 {
@@ -19,6 +21,38 @@ class PostController extends Controller
             'message' => $message,
             'data' => $data,
         ], $code);
+    }
+
+   public function getNewPosts(Request $request) 
+    {
+        $user = auth()->user();
+        
+        // Ensure we use the correct column name from your migration
+        $time = $user->ent_last_seen_post??Carbon::now();
+
+        // Must call ->count() to get the integer value
+        $count = Post::where('post_verified_at', '>=', $time)
+                    ->where('post_status', 1)
+                    ->count();
+
+        $verified = Post::where('post_verified_at', '>=', $time)
+                        ->where('post_status', 1)
+                        ->where('entID', $user->entID)
+                        ->count();
+
+        //dd($user, $count, $time, $verified );
+        if($count == 0){
+            return $this->sendResponse(null, "No Notification", false, 200);
+        }
+
+        $message = "There are $count new posts for you.";
+
+        if ($verified > 0) {
+            $message .= " You have $verified posts pass verification.";
+        }
+
+        // Call using $this-> and pass $message into the 'message' argument
+        return $this->sendResponse(null, $message, true, 200);
     }
 
     public function getPosts(Request $request)
@@ -76,12 +110,87 @@ class PostController extends Controller
                 
                 return $post;
             });
+
+            auth()->user()->update([
+                'ent_last_seen_post' => Carbon::now()
+            ]);
             
             return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
         } catch (Exception $e) {
             return $this->sendResponse(null, 'Failed to retrieve posts', false, 500);
         }
     }
+
+   public function verifyPost($postId) {
+    // 1. Corrected query (use where first, then firstOrFail)
+    $post = Post::where('postID', $postId)
+                ->where('entID', auth()->user()->entID)
+                ->firstOrFail();
+
+    //dd($post);
+    // 2. Format images (ensure post_images is cast to array in Model)
+    $imageLinks = "";
+    if (is_array($post->post_images)) {
+        foreach ($post->post_images as $image) {
+            $imageLinks .= asset('storage/' . $image) . " | ";
+        }
+        $imageLinks = rtrim($imageLinks, " | ");
+    }
+
+    // 3. Call Mistral API
+    $response = Http::withoutVerifying()
+    ->withHeaders([
+        'X-API-KEY' => config('services.mistral.key'),
+        'Content-Type' => 'application/json',
+    ])->post('https://api.mistral.ai/v1/conversations', [
+        'model' => 'magistral-small-latest',
+        'inputs' => [[
+            'role' => 'user',
+            'content' => "<text>{$post->post_caption}</text><image>{$imageLinks}</image>"
+        ]],
+        'instructions' => config('services.mistral.instructions'),
+        'completion_args' => [
+            'temperature' => 0,
+            'max_tokens' => 256,
+            'top_p' => 1
+        ]
+    ]);
+
+    if ($response->successful()) {
+        $result = $response->json();
+
+        $contentString = $result['outputs'][0]['content'] ?? '{}';
+        // 2. Decode the inner string into an array
+        $verificationDetails = json_decode($contentString, true);
+        //dd($contentString,$verificationDetails);
+
+        if($verificationDetails['dangerous_image'] > 0.3 || $verificationDetails['dangerous_text'] > 0.3){
+            $post->update([
+                'post_verification' => 'Failed',
+                'post_verification_details' => $verificationDetails, 
+            ]);
+            return $this->sendResponse($verificationDetails, "Verification failed. Please check your content.", true, 200);
+
+        }else{
+            
+            $res = $post->update([
+                'post_verification' => 'Verified',
+                'post_verification_details' => $verificationDetails, 
+                'post_verified_at' => now(),
+            ]);
+
+          
+            return $this->sendResponse($verificationDetails, "Post verified successfully", true, 200);
+
+        }
+        // 3. Update Post
+       
+
+    }
+
+    return $this->sendResponse(null, "Verification failed. Please try again later", false, 500);
+}
+
 
     public function addPost(Request $request)
     {
@@ -121,6 +230,7 @@ class PostController extends Controller
                 'post_status' => 1,
                 'post_views_count' => 0,
                 'post_likes_count' => 0,
+                'post_verification'=>"Pending"
             ]);
 
             return $this->sendResponse($post, 'Post created successfully', true, 201);

@@ -51,7 +51,7 @@ class User extends Authenticatable
     protected $fillable = [
         'ent_fullname', 'ent_email', 'ent_phoneNo', 'ent_icNo', 'ent_dob',
         'ent_bio', 'ent_profilePhoto', 'ent_account_status', 'ent_account_visibility',
-        'ent_business_name', 'ent_business_ssmNo', 'ent_username', 'ent_password'
+        'ent_business_name', 'ent_business_ssmNo', 'ent_username', 'ent_password', 'ent_last_seen_post'
     ];
 
     public function premises() {

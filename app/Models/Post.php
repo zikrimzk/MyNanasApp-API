@@ -15,7 +15,8 @@ class Post extends Model
 
     protected $fillable = [
         'post_images', 'post_caption', 'post_location', 'post_status',
-        'post_views_count', 'post_likes_count', 'post_type', 'entID'
+        'post_views_count', 'post_likes_count', 'post_type', 'entID',
+        'post_verification', 'post_verification_details', 'post_verified_at'
     ];
 
     public function user() {
