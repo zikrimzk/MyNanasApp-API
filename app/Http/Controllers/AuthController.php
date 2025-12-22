@@ -25,6 +25,12 @@ class AuthController extends Controller
         ], $code);
     }
 
+    public function alive(Request $request)
+    {
+        return response()->json([
+            'message' => 'Server is up and running',
+        ], 200);
+    }
     public function register(Request $request)
     {
         $request->validate([

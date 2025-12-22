@@ -25,6 +25,7 @@ Route::get('/', function (Request $request) {
     ], 200);
 });
 
+Route::get("/alive", [AuthController::class, 'alive']);
 // Auth routes - no authentication required
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
