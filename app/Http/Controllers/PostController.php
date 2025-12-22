@@ -69,6 +69,9 @@ class PostController extends Controller
                 $user = User::where('entID', $request->entID)->first();
             } else {
                 $user = auth()->user(); // Get current logged in user
+                $user->update([
+                    'ent_last_seen_post' => Carbon::now()
+                ]);
             }
 
             // Start the query
@@ -111,9 +114,7 @@ class PostController extends Controller
                 return $post;
             });
 
-            auth()->user()->update([
-                'ent_last_seen_post' => Carbon::now()
-            ]);
+           
             
             return $this->sendResponse($posts, 'Posts retrieved successfully', true, 200);
         } catch (Exception $e) {

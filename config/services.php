@@ -33,7 +33,7 @@ return [
 
     'mistral' => [
         'key' => env('MISTRAL_API_KEY'),
-        'instruction' =>env('MISTRAL_INSTRUCTION'),
+        'instruction' => base64_decode(env('MISTRAL_INSTRUCTION')),
 
     ],
 
