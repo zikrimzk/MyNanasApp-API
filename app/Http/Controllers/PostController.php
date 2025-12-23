@@ -151,7 +151,7 @@ class PostController extends Controller
             'role' => 'user',
             'content' => "<text>{$post->post_caption}</text><image>{$imageLinks}</image>"
         ]],
-        'instructions' => config('services.mistral.instructions'),
+        'instructions' => config('services.mistral.instruction'),
         'completion_args' => [
             'temperature' => 0,
             'max_tokens' => 256,
@@ -165,7 +165,7 @@ class PostController extends Controller
         $contentString = $result['outputs'][0]['content'] ?? '{}';
         // 2. Decode the inner string into an array
         $verificationDetails = json_decode($contentString, true);
-        dd($contentString,$verificationDetails,config('services.mistral.instructions'));
+        dd($contentString,$verificationDetails,config('services.mistral.instruction'));
 
         if($verificationDetails['dangerous_image'] > 0.3 || $verificationDetails['dangerous_text'] > 0.3){
             $post->update([
