@@ -141,8 +141,8 @@ class PostController extends Controller
     }
 
     // 3. Call Mistral API
-    $response = Http::withoutVerifying()
-    ->withHeaders([
+    $response = Http::
+        withHeaders([
         'X-API-KEY' => config('services.mistral.key'),
         'Content-Type' => 'application/json',
     ])->post('https://api.mistral.ai/v1/conversations', [
