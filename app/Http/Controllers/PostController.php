@@ -167,6 +167,10 @@ class PostController extends Controller
         $verificationDetails = json_decode($contentString, true);
         //dd($contentString,$verificationDetails,config('services.mistral.instruction'));
 
+        if(!isset($verificationDetails['dangerous_image']) || !isset($verificationDetails['dangerous_text'])){
+            return $this->sendResponse($contentString, "Verification failed. Please check your content.", true, 200);
+        
+        }
         if($verificationDetails['dangerous_image'] > 0.3 || $verificationDetails['dangerous_text'] > 0.3){
             $post->update([
                 'post_verification' => 'Failed',
