@@ -92,6 +92,8 @@ class PostController extends Controller
                 if ($request->post_type !== 'All') {
                     $query->where('post_type', $request->post_type);
                 }
+
+                $query->whereNotNull('post_verified_at');
             }
 
             // Get the results
