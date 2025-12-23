@@ -133,7 +133,7 @@ class PostController extends Controller
     //dd($post);
     // 2. Format images (ensure post_images is cast to array in Model)
     $imageLinks = "";
-    if (is_array($post->post_images)) {
+    if (isset($post_image) && is_array($post->post_images)) {
         foreach ($post->post_images as $image) {
             $imageLinks .= asset('storage/' . $image) . " | ";
         }
