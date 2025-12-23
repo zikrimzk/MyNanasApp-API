@@ -164,6 +164,9 @@ class PostController extends Controller
 
         $contentString = $result['outputs'][0]['content'] ?? '{}';
         // 2. Decode the inner string into an array
+
+        $contentString = str_ireplace('json', '', $contentString);
+
         $verificationDetails = json_decode($contentString, true);
         //dd($contentString,$verificationDetails,config('services.mistral.instruction'));
 
