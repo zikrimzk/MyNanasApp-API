@@ -165,7 +165,7 @@ class PostController extends Controller
         $contentString = $result['outputs'][0]['content'] ?? '{}';
         // 2. Decode the inner string into an array
         $verificationDetails = json_decode($contentString, true);
-        dd($contentString,$verificationDetails);
+        dd($contentString,$verificationDetails,config('services.mistral.instructions'));
 
         if($verificationDetails['dangerous_image'] > 0.3 || $verificationDetails['dangerous_text'] > 0.3){
             $post->update([
