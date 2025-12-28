@@ -283,6 +283,11 @@ class PostController extends Controller
                 $post->post_caption = $request->post_caption ?? $post->post_caption;
                 $post->post_location = $request->post_location;
                 $post->updated_at = now();
+
+                $post->post_verified_at = null;
+                $post->post_verification = "Pending";
+                $post->post_verification_details = null;
+
                 $post->save();
                 return $this->sendResponse($post, 'Post updated successfully', true, 200);
             }
